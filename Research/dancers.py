@@ -29,18 +29,19 @@ def get_not_allowed_directions(x, y, cur_room, ignore_r):
     if x > cur_room.width - ignore_r:
         not_allowed.extend([0, 1, 7])
     if y < ignore_r:
-        not_allowed.extend([1, 2, 3])
-    if y > cur_room.height - ignore_r:
         not_allowed.extend([5, 6, 7])
+    if y > cur_room.height - ignore_r:
+        not_allowed.extend([1, 2, 3])
 
     return not_allowed
 
-def calc_new_theta(dancer):
+
+def calc_new_theta(dancer, dir_noise):
     global room
     # interaction_r = 1
     # nn_dancers = find_nn_dancers(dancer.location_x, dancer.location_y, room)
     block_arg = find_new_theta_with_blocks(dancer.location_x, dancer.location_y, room)
-    new_theta = np.random.randn() * 1 + block_arg * np.pi / 4
+    new_theta = np.random.randn() * dir_noise + block_arg * np.pi / 4
     return new_theta
 
 
@@ -82,23 +83,24 @@ def find_nn_dancers(location_x, location_y, room):
 
 class Room:
     # object of all dancers and room
-    def __init__(self, n_dancers, width, height, num_iters):
+    def __init__(self, n_dancers, width, height, num_iters, speed_noise, dancers_speed):
         self.width = width
         self.height = height
         self.n_dancers = n_dancers
         self.num_iters = num_iters
+        self.noise = speed_noise
         self.dancers = []
-        self.create_dancers()
+        self.create_dancers(dancers_speed)
 
     def update_dancers(self):
         for dancer in self.dancers:
-            dancer.update_speed()
+            dancer.update_speed(self.noise)
         for dancer in self.dancers:
             dancer.make_step()
 
-    def create_dancers(self):
+    def create_dancers(self, dancers_speed):
             for n in range(self.n_dancers):
-                self.dancers.append(Dancer(self.width, self.height))
+                self.dancers.append(Dancer(self.width, self.height, dancers_speed))
 
     def draw_room(self, iter):
         # plt.figure()
@@ -109,16 +111,17 @@ class Room:
 
 class Dancer:
     # dancer in room
-    def __init__(self, width, height):
+    def __init__(self, width, height, speed):
         self.location_x = random.uniform(0, width)
         self.location_y = random.uniform(0, height)
-        self.speed = 3
+        self.speed = speed
         self.direction = random.uniform(0, 2 * np.pi)
 
-    def update_speed(self):
-        global room
-        global noise
-        new_theta = calc_new_theta(self)
+    def update_speed(self, dir_noise):
+        # y = self.location_y
+        # if 95<y<105:
+        #     a = 1
+        new_theta = calc_new_theta(self, dir_noise)
         self.direction = new_theta
 
     def make_step(self):
@@ -128,7 +131,7 @@ class Dancer:
 
 
 noise = 1
-room = Room(n_dancers=100, width=500, height=100, num_iters=100)
+room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=1, dancers_speed=3)
 room.draw_room(iter=0)
 for iter in range(room.num_iters):
     room.update_dancers()
