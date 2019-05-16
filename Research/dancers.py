@@ -25,13 +25,13 @@ def create_blocks(x, y, ignore_r, b_half_r):
 def get_not_allowed_directions(x, y, cur_room, ignore_r):
     not_allowed = []
     if x < ignore_r:
-        not_allowed.extend([3, 4, 5])
+        not_allowed.extend([3, 4, 5, 2, 6])
     if x > cur_room.width - ignore_r:
-        not_allowed.extend([0, 1, 7])
+        not_allowed.extend([0, 1, 7 , 2, 6])
     if y < ignore_r:
-        not_allowed.extend([5, 6, 7])
+        not_allowed.extend([5, 6, 7, 4, 0])
     if y > cur_room.height - ignore_r:
-        not_allowed.extend([1, 2, 3])
+        not_allowed.extend([1, 2, 3, 4, 0])
 
     return not_allowed
 
@@ -41,14 +41,14 @@ def calc_new_theta(dancer, dir_noise):
     # interaction_r = 1
     # nn_dancers = find_nn_dancers(dancer.location_x, dancer.location_y, room)
     block_arg = find_new_theta_with_blocks(dancer.location_x, dancer.location_y, room)
-    new_theta = np.random.randn() * dir_noise + block_arg * np.pi / 4
+    new_theta = (np.random.uniform()-0.5) * dir_noise + block_arg * np.pi / 4
     return new_theta
 
 
 def find_new_theta_with_blocks(x, y, room):
     # all_locations = np.array([[dancer.location_x, dancer.location_y] for dancer in room.dancers])
-    ignore_r = 5
-    b_half_r = 20
+    ignore_r = 0.5
+    b_half_r = 15
     blocks = create_blocks(x, y, ignore_r, b_half_r)
 
     blocks_occupation = calc_block_occupancy(room, blocks)
@@ -97,6 +97,8 @@ class Room:
             dancer.update_speed(self.noise)
         for dancer in self.dancers:
             dancer.make_step()
+            if dancer.out_of_bounds:
+                a = 1
 
     def create_dancers(self, dancers_speed):
             for n in range(self.n_dancers):
@@ -106,7 +108,7 @@ class Room:
         # plt.figure()
         color = [1-iter/self.num_iters, iter/self.num_iters, 0.5]
         locs = np.array([[dancer.location_x, dancer.location_y] for dancer in self.dancers])
-        plt.scatter(locs[:, 0], locs[:, 1], color=color)
+        plt.scatter(locs[:, 0], locs[:, 1], c=color)
 
 
 class Dancer:
@@ -116,22 +118,33 @@ class Dancer:
         self.location_y = random.uniform(0, height)
         self.speed = speed
         self.direction = random.uniform(0, 2 * np.pi)
+        self.room_height = height
+        self.room_width = width
 
     def update_speed(self, dir_noise):
         # y = self.location_y
         # if 95<y<105:
         #     a = 1
         new_theta = calc_new_theta(self, dir_noise)
-        self.direction = new_theta
+        self.direction = (self.direction + new_theta) / 2
 
     def make_step(self):
         global room
         self.location_x = make_step(self, 'x')
         self.location_y = make_step(self, 'y')
 
+    def out_of_bounds(self):
+        out_of_bounds = False
+        if (self.location_y > self.room_height) or (self.location_y < 0):
+            out_of_bounds = True
+        if (self.location_x > self.room_width) or (self.location_x < 0):
+            out_of_bounds = True
+        return out_of_bounds
+
 
 noise = 1
-room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=1, dancers_speed=3)
+# room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=2)
+room = Room(n_dancers=1, width=10, height=10, num_iters=100, speed_noise=0, dancers_speed=1)
 room.draw_room(iter=0)
 for iter in range(room.num_iters):
     room.update_dancers()
