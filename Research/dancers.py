@@ -1,109 +1,132 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import numpy.linalg as la
+
+
+def py_ang(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'    """
+    cosang = np.dot(v1, v2)
+    sinang = la.norm(np.cross(v1, v2))
+    return np.arctan2(sinang, cosang)
+
+
+def get_average_angle(theta1, theta2):
+    v1 = np.array([np.cos(theta1), np.sin(theta1)])
+    v2 = np.array([np.cos(theta2), np.sin(theta2)])
+    v = (v1 + v2)
+    v = v/np.linalg.norm(v)
+    return np.arctan2(v[1], v[0])
+
+
+def calc_anlgle(xs, ys):
+    vec = v1 - v2
+    np.arctan2(vec[1], vec[0])
+    return 0
+
+
+def find_new_theta_with_dists_v2(curr_dancer, room):
+    x, y = curr_dancer.x, curr_dancer.y
+
+    dists = []
+    vecs = []
+    for n, dancer in enumerate(room.dancers):
+        dx = dancer.x - x
+        if abs(dx) > dancer.room_width/2:
+            dx = -np.sign(dx) * (dancer.room_width - abs(dx))
+        dy = dancer.y - y
+        if abs(dy) > dancer.room_height/2:
+            dy = -np.sign(dy) * (dancer.room_height - abs(dy))
+
+        dists.append(np.linalg.norm(np.array([dx, dy])))
+        vecs.append(np.array([dx, dy]))
+
+    nn = np.argsort(dists)[1:10]
+    # nn = np.argsort(dists)[1:4]
+    # nn = [nn[0]]
+
+    v_tot = np.array([0, 0])
+    curr_dancer.step_size = np.min([50*1/(0.05+dists[nn[0]]), 3])
+    if curr_dancer.step_size > 20:
+        print('OMG!!!')
+    for order, n in enumerate(nn):
+        if True:  # dists[n] < 50:
+            # dancer = room.dancers[n]
+            v2 = vecs[n]  # v2 = np.array([dancer.x, dancer.y])
+            v_tot = v_tot + (v2 / (dists[n]**2))   # ((v2 - v1) / (dists[n]**1))
+
+    angle = np.arctan2(v_tot[1], v_tot[0]) - np.pi
+    angle = angle + (room.noise * (np.random.uniform() - 0.5))
+    return angle
+
+
+def find_new_theta_with_dists(curr_dancer, room):
+    x, y = curr_dancer.x, curr_dancer.y
+    v1 = np.array([x, y])
+
+    dists = []
+    for n, dancer in enumerate(room.dancers):
+        dists.append(np.linalg.norm(v1 - np.array([dancer.x, dancer.y])))
+    # nn = np.argsort(dists)[1:10]
+    nn = np.argsort(dists)[1:4]
+    # nn = [nn[0]]
+
+    v_tot = np.array([0, 0])
+    curr_dancer.step_size = 50*1/(0.05+dists[nn[0]])
+    if curr_dancer.step_size > 20:
+        print('OMG!!!')
+    for order, n in enumerate(nn):
+        if True:  # dists[n] < 50:
+            dancer = room.dancers[n]
+            v2 = np.array([dancer.x, dancer.y])
+            v_tot = v_tot + ((v2 - v1) / (dists[n]**1))
+
+    angle = np.arctan2(v_tot[1], v_tot[0]) - np.pi
+    return angle
 
 
 def make_step(dancer, ax):
     if ax == 'x':
-        return dancer.x + dancer.speed * np.cos(dancer.direction)
+        # return (dancer.x + (dancer.step_size + np.random.uniform()-0.5) * np.cos(dancer.direction)) % dancer.room_width
+        return (dancer.x + (dancer.step_size) * np.cos(dancer.direction)) % dancer.room_width
     if ax == 'y':
-        return dancer.y + dancer.speed * np.sin(dancer.direction)
-
-
-def create_blocks(x, y, ignore_r, b_half_r):
-    blocks = [[x + ignore_r, x + ignore_r + 2 * b_half_r, y + b_half_r, y - b_half_r],  # east
-              [x + ignore_r, x + ignore_r + 2 * b_half_r, y + ignore_r + 2 * b_half_r, y + ignore_r],  # north east
-              [x - b_half_r, x + b_half_r, y + ignore_r + 2 * b_half_r, y + ignore_r],  # north
-              [x - ignore_r - 2 * b_half_r, x - ignore_r, y + ignore_r + 2 * b_half_r, y + ignore_r],  # north west
-              [x - ignore_r - 2 * b_half_r, x - ignore_r, y + b_half_r, y - b_half_r],  # west
-              [x - ignore_r - 2 * b_half_r, x - ignore_r, y - ignore_r, y - ignore_r - 2 * b_half_r],  # south west
-              [x - b_half_r, x + b_half_r, y - ignore_r, y - ignore_r - 2 * b_half_r],  # south
-              [x + ignore_r, x + ignore_r + 2 * b_half_r, y - ignore_r, y - ignore_r - 2 * b_half_r]]  # south ease
-    return blocks
-
-
-def get_not_allowed_directions(x, y, cur_room, ignore_r):
-    not_allowed = []
-    if x < ignore_r:
-        not_allowed.extend([3, 4, 5, 2, 6])
-    if x > cur_room.width - ignore_r:
-        not_allowed.extend([0, 1, 7 , 2, 6])
-    if y < ignore_r:
-        not_allowed.extend([5, 6, 7, 4, 0])
-    if y > cur_room.height - ignore_r:
-        not_allowed.extend([1, 2, 3, 4, 0])
-
-    return not_allowed
-
-
-def calc_new_theta(dancer, dir_noise):
-    global room
-    # interaction_r = 1
-    # nn_dancers = find_nn_dancers(dancer.x, dancer.y, room)
-    block_arg = find_new_theta_with_blocks(dancer.x, dancer.y, room)
-    new_theta = (np.random.uniform()-0.5) * dir_noise + block_arg * np.pi / 4
-    return new_theta
-
-
-def find_new_theta_with_blocks(x, y, room):
-    # all_locations = np.array([[dancer.x, dancer.y] for dancer in room.dancers])
-    ignore_r = 0.0
-    b_half_r = room.height / 20
-    blocks = create_blocks(x, y, ignore_r, b_half_r)
-
-    blocks_occupation = calc_block_occupancy(room, blocks)
-    not_allowed = get_not_allowed_directions(x, y, room, ignore_r)
-    for ind in not_allowed:
-        blocks_occupation[ind] = 9999
-
-    best_directions = np.where(blocks_occupation == blocks_occupation.min())
-
-    new_direction = random.choice(best_directions[0])
-
-    return new_direction
-
-
-def calc_block_occupancy(cur_room, blocks):
-    blocks_occupation = np.zeros(8)
-    for ii, dancer in enumerate(cur_room.dancers):
-        x, y = dancer.x, dancer.y
-        for n, block in enumerate(blocks):
-            if (x > block[0]) and (x < block[1]) and (y < block[2]) and (y > block[3]):
-                blocks_occupation[n] += 1
-    return blocks_occupation
-
-
-def find_nn_dancers(x, y, room):
-    all_locations = np.array([[dancer.x, dancer.y] for dancer in room.dancers])
-    relative_locations = all_locations - np.array([location_x, y])
-    dists = (relative_locations[:, 0]**2 + relative_locations[:, 1]**2)**0.5
-    directions = np.arctan(relative_locations[:, 1]/relative_locations[:, 0])
-    return 0
+        # return (dancer.y + (dancer.step_size + np.random.uniform()-0.5) * np.sin(dancer.direction)) % dancer.room_height
+        return (dancer.y + (dancer.step_size) * np.sin(dancer.direction)) % dancer.room_height
 
 
 class Room:
     # object of all dancers and room
-    def __init__(self, n_dancers, width, height, num_iters, speed_noise, dancers_speed):
+    def __init__(self, n_dancers, width, height, num_iters, speed_noise):
         self.width = width
         self.height = height
         self.n_dancers = n_dancers
         self.num_iters = num_iters
         self.noise = speed_noise
         self.dancers = []
-        self.create_dancers(dancers_speed)
+        self.create_dancers()
         self.iter = 0
 
     def update_dancers(self):
         for n, dancer in enumerate(self.dancers):
-            dancer.update_speed(self.noise)
+            dancer.update_speed(self)
+            # dancer.make_step()
         for n, dancer in enumerate(self.dancers):
             dancer.make_step()
-            if dancer.out_of_bounds:
-                a = 1
+        #     if dancer.out_of_bounds:
+        #         a = 1
+        # r = list(range(len(room.dancers)))
+        # # random.shuffle(r)
+        # for n in r:
+        #     dancer = room.dancers[n]
+        #     dancer.direction = dancer.update_speed(self.noise)
+        #     # dancer.make_step()
+        # for n in r:
+        #     dancer = room.dancers[n]
+        #     dancer.make_step()
 
-    def create_dancers(self, dancers_speed):
+    def create_dancers(self):
             for n in range(self.n_dancers):
-                self.dancers.append(Dancer(self.width, self.height, dancers_speed))
+                self.dancers.append(Dancer(self.width, self.height))
 
     def draw_room(self):
         # plt.figure()
@@ -112,26 +135,26 @@ class Room:
         axes.set_ylim([0, self.height])
         color = [1-self.iter/self.num_iters, self.iter/self.num_iters, 0.5]
         locs = np.array([[dancer.x, dancer.y] for dancer in self.dancers])
-        plt.scatter(locs[:, 0], locs[:, 1], c=color)
+        plt.scatter(locs[:, 0], locs[:, 1], s=15, c=color)
 
 
 class Dancer:
     # dancer in room
-    def __init__(self, width, height, speed):
+    def __init__(self, width, height):
+        # self.x = random.uniform(width*2/5, width*3/5)  # (0, width)
+        # self.y = random.uniform(height*2/5, height*3/5)  # (0, height)
         self.x = random.uniform(0, width)
         self.y = random.uniform(0, height)
-        self.speed = speed
         self.direction = random.uniform(0, 2 * np.pi)
         self.room_height = height
         self.room_width = width
+        self.step_size = 1
 
-    def update_speed(self, dir_noise):
-        # y = self.y
-        # if 95<y<105:
-        #     a = 1
-        new_theta = calc_new_theta(self, dir_noise)
-        # self.direction = (self.direction + new_theta) / 2
-        self.direction = new_theta
+    def update_speed(self, curr_room):
+        # self.direction = calc_new_theta(self, dir_noise)
+        new_direction = find_new_theta_with_dists_v2(self, curr_room)
+        direction = get_average_angle(new_direction, self.direction)
+        self.direction = direction
 
     def make_step(self):
         global room
@@ -147,14 +170,25 @@ class Dancer:
         return out_of_bounds
 
 
-noise = 1
-# room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=2)
-room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0.5, dancers_speed=1)
+# if __name__ == '__main__':
+#     a = 1
+
+    # room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=2)
+room = Room(n_dancers=150, width=300, height=300, num_iters=100, speed_noise=0)
+# room.dancers[0].y = 51
+# room.dancers[0].x = 50
+# room.dancers[1].y = 49
+# room.dancers[1].x = 250
+# room.dancers[2].y = 200
+# room.dancers[2].x = 200
+# room.dancers[3].y = 200
+# room.dancers[3].x = 100
+# room.dancers[4].y = 150
+# room.dancers[4].x = 150
+
 room.draw_room()
 # for iter in range(room.num_iters):
 while room.iter < room.num_iters:
     room.iter += 1
     room.update_dancers()
     room.draw_room()
-
-
