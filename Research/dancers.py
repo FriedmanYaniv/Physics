@@ -41,7 +41,7 @@ def find_new_theta_with_dists_v2(curr_dancer, room):
         dists.append(np.linalg.norm(np.array([dx, dy])))
         vecs.append(np.array([dx, dy]))
 
-    nn = np.argsort(dists)[1:10]
+    nn = np.argsort(dists)[1:15]
     # nn = np.argsort(dists)[1:4]
     # nn = [nn[0]]
 
@@ -105,6 +105,7 @@ class Room:
         self.dancers = []
         self.create_dancers()
         self.iter = 0
+        self.sparsity = []
 
     def update_dancers(self):
         for n, dancer in enumerate(self.dancers):
@@ -130,12 +131,36 @@ class Room:
 
     def draw_room(self):
         # plt.figure()
+        # plt.subplot(2, 1, 1)
         axes = plt.gca()
         axes.set_xlim([0, self.width])
         axes.set_ylim([0, self.height])
         color = [1-self.iter/self.num_iters, self.iter/self.num_iters, 0.5]
         locs = np.array([[dancer.x, dancer.y] for dancer in self.dancers])
-        plt.scatter(locs[:, 0], locs[:, 1], s=15, c=color)
+        colors = color * np.ones((self.n_dancers, 1))
+        plt.scatter(locs[:, 0], locs[:, 1], s=15, c=colors)
+
+        # plt.subplot(2, 1, 2)
+        # axes = plt.gca()
+        # axes.set_xlim([0, self.num_iters])
+        # axes.set_ylim([0, 1.1])
+        # if len(self.sparsity) > 0:
+        #     plt.plot(np.array(self.sparsity)[:, 1])
+
+    def calc_sparsity(self):
+        num_grid_blocks = int(np.sqrt(self.n_dancers))
+        dx, dy = int(self.width / num_grid_blocks), int(self.height / num_grid_blocks)
+        occ_mat = np.zeros((num_grid_blocks, num_grid_blocks))
+        for n, dancer in enumerate(self.dancers):
+            x, y = dancer.x, dancer.y
+            x_block = min(int(x / dx), num_grid_blocks-1)
+            y_block = min(int(y / dy), num_grid_blocks-1)
+            occ_mat[x_block, y_block] = occ_mat[x_block, y_block] + 1
+
+        bol_occ = 1 * (occ_mat > 0)
+        score = sum(bol_occ.ravel()) / len(bol_occ.ravel())
+
+        self.sparsity.append([self.iter, score])
 
 
 class Dancer:
@@ -143,8 +168,8 @@ class Dancer:
     def __init__(self, width, height):
         # self.x = random.uniform(width*2/5, width*3/5)  # (0, width)
         # self.y = random.uniform(height*2/5, height*3/5)  # (0, height)
-        self.x = random.uniform(0, width)
-        self.y = random.uniform(0, height)
+        self.x = random.uniform(0, width/5)
+        self.y = random.uniform(0, height/5)
         self.direction = random.uniform(0, 2 * np.pi)
         self.room_height = height
         self.room_width = width
@@ -170,25 +195,30 @@ class Dancer:
         return out_of_bounds
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     a = 1
 
     # room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=2)
-room = Room(n_dancers=150, width=300, height=300, num_iters=100, speed_noise=0)
-# room.dancers[0].y = 51
-# room.dancers[0].x = 50
-# room.dancers[1].y = 49
-# room.dancers[1].x = 250
-# room.dancers[2].y = 200
-# room.dancers[2].x = 200
-# room.dancers[3].y = 200
-# room.dancers[3].x = 100
-# room.dancers[4].y = 150
-# room.dancers[4].x = 150
+    room = Room(n_dancers=150, width=250, height=300, num_iters=850, speed_noise=6.5)
+    # room.dancers[0].x = 50
+    # room.dancers[1].y = 49
+    # room.dancers[1].x = 250
+    # room.dancers[2].y = 200
+    # room.dancers[2].x = 200
+    # room.dancers[3].y = 200
+    # room.dancers[3].x = 100
+    # room.dancers[4].y = 150
+    # room.dancers[4].x = 150
 
-room.draw_room()
-# for iter in range(room.num_iters):
-while room.iter < room.num_iters:
-    room.iter += 1
-    room.update_dancers()
     room.draw_room()
+    # for iter in ra    nge(room.num_iters):
+    while room.iter < room.num_iters:
+        room.iter += 1
+        if room.iter % 10 == 0:
+            print('iteration {} / {}'.format(room.iter, room.num_iters))
+        room.update_dancers()
+        room.calc_sparsity()
+        room.draw_room()
+
+    fig = plt.figure()
+    plt.plot(np.array(room.sparsity)[:, 1])

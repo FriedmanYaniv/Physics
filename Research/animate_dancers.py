@@ -2,9 +2,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
 import dancers
+import os
+from shutil import copyfile
 
 def init():
-    room = dancers.Room(n_dancers=200, width=100, height=100, num_iters=20, speed_noise=0)
+    # room = dancers.Room(n_dancers=200, width=100, height=100, num_iters=20, speed_noise=0)
     return room
 
 
@@ -12,6 +14,8 @@ def animate(iter):
     global room
     fig.clear()
     room.iter += 1
+    if room.iter % 10 == 0:
+        print('iteration {} / {}'.format(room.iter, room.num_iters))
     room.update_dancers()
     room.draw_room()
     return 0
@@ -22,13 +26,8 @@ width = 100
 height = 100
 ax = plt.axes(xlim=(0, width), ylim=(0, height))
 
-# room = dancers.Room(n_dancers=100, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=1)
-# room = dancers.Room(n_dancers=200, width=100, height=100, num_iters=300, speed_noise=0)
-# room = dancers.Room(n_dancers=5, width=300, height=300, num_iters=300, speed_noise=0, dancers_speed=1)
-# room = dancers.Room(n_dancers=200, width=300, height=300, num_iters=50, speed_noise=0)
-
 num_frames = 200
-room = dancers.Room(n_dancers=150, width=300, height=300, num_iters=500, speed_noise=1)
+room = dancers.Room(n_dancers=150, width=250, height=300, num_iters=250, speed_noise=1)
 # room.dancers[0].y = 50
 # room.dancers[0].x = 50
 # room.dancers[1].y = 50
@@ -44,4 +43,14 @@ room = dancers.Room(n_dancers=150, width=300, height=300, num_iters=500, speed_n
 anim = animation.FuncAnimation(fig, animate, init_func=init,
                                frames=num_frames)
 
-anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+
+# save code and animation
+curr_path = os.path.dirname(os.path.abspath(__file__))
+directory = os.path.join(curr_path, 'animation')
+if not os.path.exists(directory):
+    os.makedirs(directory)
+files = ['animate_dancers.py', 'dancers.py']
+for file in files:
+    copyfile(os.path.join(curr_path, file), os.path.join(directory, file))
+
+anim.save(os.path.join(directory, 'basic_animation.mp4'), fps=20, extra_args=['-vcodec', 'libx264'])
