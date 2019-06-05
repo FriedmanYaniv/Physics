@@ -26,15 +26,15 @@ def calc_anlgle(xs, ys):
 
 
 def find_new_theta_with_dists_v2(curr_dancer, room):
-    x, y = curr_dancer.x, curr_dancer.y
+    x, y = curr_dancer.x[-1], curr_dancer.y[-1]
 
     dists = []
     vecs = []
     for n, dancer in enumerate(room.dancers):
-        dx = dancer.x - x
+        dx = dancer.x[-1] - x
         if abs(dx) > dancer.room_width/2:
             dx = -np.sign(dx) * (dancer.room_width - abs(dx))
-        dy = dancer.y - y
+        dy = dancer.y[-1] - y
         if abs(dy) > dancer.room_height/2:
             dy = -np.sign(dy) * (dancer.room_height - abs(dy))
 
@@ -152,7 +152,7 @@ class Room:
         dx, dy = int(self.width / num_grid_blocks), int(self.height / num_grid_blocks)
         occ_mat = np.zeros((num_grid_blocks, num_grid_blocks))
         for n, dancer in enumerate(self.dancers):
-            x, y = dancer.x, dancer.y
+            x, y = dancer.x[-1][0], dancer.y[-1][0]
             x_block = min(int(x / dx), num_grid_blocks-1)
             y_block = min(int(y / dy), num_grid_blocks-1)
             occ_mat[x_block, y_block] = occ_mat[x_block, y_block] + 1
@@ -168,8 +168,8 @@ class Dancer:
     def __init__(self, width, height):
         # self.x = random.uniform(width*2/5, width*3/5)  # (0, width)
         # self.y = random.uniform(height*2/5, height*3/5)  # (0, height)
-        self.x = random.uniform(0, width/5)
-        self.y = random.uniform(0, height/5)
+        self.x = [random.uniform(0, width/5)]
+        self.y = [random.uniform(0, height/5)]
         self.direction = random.uniform(0, 2 * np.pi)
         self.room_height = height
         self.room_width = width
@@ -183,8 +183,8 @@ class Dancer:
 
     def make_step(self):
         global room
-        self.x = make_step(self, 'x')
-        self.y = make_step(self, 'y')
+        self.x.append(make_step(self, 'x'))
+        self.y.append(make_step(self, 'y'))
 
     def out_of_bounds(self):
         out_of_bounds = False
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     # room.dancers[4].y = 150
     # room.dancers[4].x = 150
 
-    room.draw_room()
+    # room.draw_room()
     # for iter in ra    nge(room.num_iters):
     while room.iter < room.num_iters:
         room.iter += 1
@@ -218,7 +218,7 @@ if __name__ == '__main__':
             print('iteration {} / {}'.format(room.iter, room.num_iters))
         room.update_dancers()
         room.calc_sparsity()
-        room.draw_room()
+        # room.draw_room()
 
     fig = plt.figure()
     plt.plot(np.array(room.sparsity)[:, 1])
