@@ -152,7 +152,7 @@ class Room:
         dx, dy = int(self.width / num_grid_blocks), int(self.height / num_grid_blocks)
         occ_mat = np.zeros((num_grid_blocks, num_grid_blocks))
         for n, dancer in enumerate(self.dancers):
-            x, y = dancer.x[-1][0], dancer.y[-1][0]
+            x, y = dancer.x[-1], dancer.y[-1]
             x_block = min(int(x / dx), num_grid_blocks-1)
             y_block = min(int(y / dy), num_grid_blocks-1)
             occ_mat[x_block, y_block] = occ_mat[x_block, y_block] + 1
@@ -183,8 +183,8 @@ class Dancer:
 
     def make_step(self):
         global room
-        self.x.append(make_step(self, 'x'))
-        self.y.append(make_step(self, 'y'))
+        self.x.append(make_step(self, 'x')[0])
+        self.y.append(make_step(self, 'y')[0])
 
     def out_of_bounds(self):
         out_of_bounds = False
@@ -199,7 +199,7 @@ if __name__ == '__main__':
 #     a = 1
 
     # room = Room(n_dancers=200, width=100, height=100, num_iters=100, speed_noise=0, dancers_speed=2)
-    room = Room(n_dancers=150, width=250, height=300, num_iters=850, speed_noise=6.5)
+    room = Room(n_dancers=10, width=250, height=300, num_iters=850, speed_noise=6.5)
     # room.dancers[0].x = 50
     # room.dancers[1].y = 49
     # room.dancers[1].x = 250
@@ -220,5 +220,5 @@ if __name__ == '__main__':
         room.calc_sparsity()
         # room.draw_room()
 
-    fig = plt.figure()
-    plt.plot(np.array(room.sparsity)[:, 1])
+    # fig = plt.figure()
+    # plt.plot(np.array(room.sparsity)[:, 1])
