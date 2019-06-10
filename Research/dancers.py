@@ -136,7 +136,7 @@ class Room:
         axes.set_xlim([0, self.width])
         axes.set_ylim([0, self.height])
         color = [1-self.iter/self.num_iters, self.iter/self.num_iters, 0.5]
-        locs = np.array([[dancer.x, dancer.y] for dancer in self.dancers])
+        locs = np.array([[dancer.x[-1], dancer.y[-1]] for dancer in self.dancers])
         colors = color * np.ones((self.n_dancers, 1))
         plt.scatter(locs[:, 0], locs[:, 1], s=15, c=colors)
 
