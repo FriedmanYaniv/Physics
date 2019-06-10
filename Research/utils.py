@@ -55,3 +55,27 @@ def calc_block_occupancy(cur_room, blocks):
                 blocks_occupation[n] += 1
     return blocks_occupation
 
+
+def find_new_theta_with_dists(curr_dancer, room):
+    x, y = curr_dancer.x, curr_dancer.y
+    v1 = np.array([x, y])
+
+    dists = []
+    for n, dancer in enumerate(room.dancers):
+        dists.append(np.linalg.norm(v1 - np.array([dancer.x, dancer.y])))
+    # nn = np.argsort(dists)[1:10]
+    nn = np.argsort(dists)[1:4]
+    # nn = [nn[0]]
+
+    v_tot = np.array([0, 0])
+    curr_dancer.step_size = 50*1/(0.05+dists[nn[0]])
+    if curr_dancer.step_size > 20:
+        print('OMG!!!')
+    for order, n in enumerate(nn):
+        if True:  # dists[n] < 50:
+            dancer = room.dancers[n]
+            v2 = np.array([dancer.x, dancer.y])
+            v_tot = v_tot + ((v2 - v1) / (dists[n]**1))
+
+    angle = np.arctan2(v_tot[1], v_tot[0]) - np.pi
+    return angle

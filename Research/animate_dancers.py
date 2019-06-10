@@ -27,7 +27,8 @@ height = 100
 ax = plt.axes(xlim=(0, width), ylim=(0, height))
 
 num_frames = 200
-room = dancers.Room(n_dancers=150, width=250, height=300, num_iters=250, speed_noise=1)
+room = dancers.Room(n_dancers=150, width=200, height=200, num_iters=200, speed_noise=0)
+# room = dancers.Room(n_dancers=10, width=50, height=50, num_iters=350, speed_noise=1.5)
 # room.dancers[0].y = 50
 # room.dancers[0].x = 50
 # room.dancers[1].y = 50
@@ -53,4 +54,4 @@ files = ['animate_dancers.py', 'dancers.py']
 for file in files:
     copyfile(os.path.join(curr_path, file), os.path.join(directory, file))
 
-anim.save(os.path.join(directory, 'basic_animation.mp4'), fps=20, extra_args=['-vcodec', 'libx264'])
+anim.save(os.path.join(directory, 'basic_animation.mp4'), fps=10, extra_args=['-vcodec', 'libx264'])
