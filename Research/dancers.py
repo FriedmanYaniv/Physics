@@ -5,11 +5,11 @@ import random
 
 def choose_best_slice(chosen_slices, num_slices):
     data = chosen_slices.tolist()
-    extended_data = data + [num_slices]
+    extended_data = data + [i+num_slices for i in data]
     seqs = []
     curr_seq = []
-    for n, i in enumerate(data):
-        curr_seq.append(data[n])
+    for n, i in enumerate(extended_data[:-1]):
+        curr_seq.append(extended_data[n])
         if extended_data[n + 1] == i + 1:
             pass
         else:
@@ -20,6 +20,8 @@ def choose_best_slice(chosen_slices, num_slices):
         seqs.append(curr_seq)
     longest = seqs[np.argmax([len(elem) for elem in seqs])]
     best_slice = longest[int(len(longest) / 2)]
+    if best_slice >= num_slices:
+        best_slice -= num_slices
     return best_slice
 
 
@@ -206,8 +208,8 @@ class Room:
 class Dancer:
     # dancer in room
     def __init__(self, id_num, width, height):
-        self.x = random.uniform(0, width)  # (0, width)  random.uniform(width*1/5, width*4/5)
-        self.y = random.uniform(0, height)  # (0, height)  random.uniform(height*1/5, height*4/5)
+        self.x = random.uniform(width*1/5, width*4/5)  # (0, width)  random.uniform(width*1/5, width*4/5)
+        self.y = random.uniform(height*1/5, height*4/5)  # (0, height)  random.uniform(height*1/5, height*4/5)
         # self.x = random.uniform(0, width/5)
         # self.y = random.uniform(0, height/5)
         self.direction = random.uniform(0, 2 * np.pi)
@@ -260,3 +262,4 @@ if __name__ == '__main__':
     plt.plot(np.array(room.sparsity)[:, 1])
     fig = plt.figure()
     plt.plot(np.array(room.mean_direction)[:, 1])
+dfg
