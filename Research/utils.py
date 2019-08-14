@@ -1,5 +1,4 @@
-
-
+import numpy as np
 
 def create_blocks(x, y, ignore_r, b_half_r):
     blocks = [[x + ignore_r, x + ignore_r + 2 * b_half_r, y + b_half_r, y - b_half_r],  # east
@@ -11,7 +10,6 @@ def create_blocks(x, y, ignore_r, b_half_r):
               [x - b_half_r, x + b_half_r, y - ignore_r, y - ignore_r - 2 * b_half_r],  # south
               [x + ignore_r, x + ignore_r + 2 * b_half_r, y - ignore_r, y - ignore_r - 2 * b_half_r]]  # south ease
     return blocks
-
 
 
 def get_not_allowed_directions(x, y, cur_room, ignore_r):
